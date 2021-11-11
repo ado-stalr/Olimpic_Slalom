@@ -8,4 +8,12 @@ find_package(Freetype REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(SFML 2 COMPONENTS window graphics system REQUIRED)
 
-add_subdirectory(game)
+file(GLOB vector "vectors/main.cpp")
+
+add_executable(game main.cpp ${vector})
+
+target_include_directories(game PRIVATE ${SFML_INCLUDE_DIR})
+target_compile_features(game PUBLIC cxx_std_17)
+target_compile_definitions(game PRIVATE SFML_STATIC)
+
+target_link_libraries(game ${SFML_LIBRARIES} ${SFML_DEPENDENCIES}) 
