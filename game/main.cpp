@@ -4,16 +4,31 @@
 #include <cmath>
 #include <cstdint>
 #include <iostream>
+#include <cstdlib>
+#include "vectors/main.h"
 
+struct Player
+{
+    sf::Sprite sprite;
+    sf::Texture texture;
+    sf::Vector2f position;
+};
+
+constexpr unsigned WINDOW_WIDTH = 800;
+constexpr unsigned WINDOW_HEIGHT = 600;
+const float MOVING_SPEED = 600.0;
 
 // Инициализирует игрока
-void initPlayer(sf::Sprite &player, sf::Texture &playerTexture)
+void initPlayer(Player &player)
 {
-    playerTexture.loadFromFile("code/textures/player.png");
-    player.setTexture(playerTexture);
-    sf::FloatRect boundingRect = player.getLocalBounds();
-    player.setOrigin(boundingRect.width / 2, boundingRect.height / 2);
-    player.setPosition(400, 300);
+    player.texture.loadFromFile("textures/sheep.png");
+    player.sprite.setTexture(player.texture);
+    sf::FloatRect boundingRect = player.sprite.getLocalBounds();
+    player.sprite.setOrigin(boundingRect.width / 2, boundingRect.height / 2);
+    player.position = {-100, WINDOW_HEIGHT + 20};
+    player.sprite.setPosition(player.position);
+
+    player.sprite.setTextureRect(sf::IntRect(10, 10, 500, 500));
 }
 
 // Переводит радианы в градусы
@@ -27,7 +42,6 @@ void onMouseClick(const sf::Event &event)
 {
     if (event.mouseButton.button == sf::Mouse::Left)
     {
-        
         std::cout << "the left button was pressed" << std::endl;
         std::cout << "mouse x: " << event.mouseButton.x << std::endl;
         std::cout << "mouse y: " << event.mouseButton.y << std::endl;
@@ -59,50 +73,56 @@ void pollEvents(sf::RenderWindow &window)
     }
 }
 
-float vectorModule(float x, float y)
+void update(Player &player, float deltaTime)
 {
-    return sqrt((x * x) + (y * y));
-}
-
-void update(sf::Sprite &player, float deltaTime)
-{
-    const sf::Vector2f playerPosition = player.getPosition();
-    const sf::Vector2f delta = pointerPosition - {0,0};
-    const float moduleDelta = moduleVectora(delta.x, delta.y);
+    const sf::Vector2f playerPosition = player.position;
+    const sf::Vector2f delta = playerPosition - sf::Vector2f({0, 0});
+    const float moduleDelta = vectorModule(delta.x, delta.y);
     if (!moduleDelta)
         return;
 
+    sf::Vector2f movingFrame = {0, -MOVING_SPEED * deltaTime};
+    sf::Vector2f newPosition = playerPosition + movingFrame;
+    if (newPosition.y < -100)
+    {
+        float rand = float(std::rand() % WINDOW_WIDTH / 2) - WINDOW_WIDTH / 4;
+        std::cout << rand << std::endl;
+        newPosition = {rand, WINDOW_HEIGHT + 500};
+    }
+    player.position = newPosition;
+}
 // Рисует и выводит один кадр
-void redrawFrame(sf::RenderWindow &window, sf::Sprite &player)
+void redrawFrame(sf::RenderWindow &window, Player &player)
 {
+    const float perspKoef = 1 + 0.5 * (player.position.y / WINDOW_HEIGHT);
+    player.sprite.setPosition({player.position.x * perspKoef, player.position.y});
+    player.sprite.setScale({perspKoef - 0.9, perspKoef - 0.9});
+    player.sprite.move({WINDOW_WIDTH / 2, 0});
     window.clear(sf::Color(0xFF, 0xFF, 0xFF));
-    window.draw(player);
+    window.draw(player.sprite);
     window.display();
 }
 
 int main()
 {
-    constexpr unsigned WINDOW_WIDTH = 800;
-    constexpr unsigned WINDOW_HEIGHT = 600;
     sf::Clock clock;
-    
+    std::srand(std::time(nullptr));
     sf::ContextSettings settings;
     settings.antialiasingLevel = 8;
     sf::RenderWindow window(
         sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}),
         "Arrow follows mouse", sf::Style::Default, settings);
 
-    sf::Sprite player;
-    sf::Texture playerTexture;
+    Player player;
 
-    initPlayer(player, playerTexture);
+    initPlayer(player);
 
     while (window.isOpen())
     {
         float deltaTime = getDeltaTime(clock);
 
         pollEvents(window);
-        update(pointer, player, deltaTime);
+        update(player, deltaTime);
         redrawFrame(window, player);
     }
-} 
+}
