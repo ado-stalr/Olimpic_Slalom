@@ -14,9 +14,23 @@ struct Player
     sf::Vector2f position;
 };
 
-constexpr unsigned WINDOW_WIDTH = 800;
-constexpr unsigned WINDOW_HEIGHT = 600;
-const float MOVING_SPEED = 300.0;
+const unsigned WINDOW_WIDTH = 1280;
+const unsigned WINDOW_HEIGHT = 800;
+const float MOVING_SPEED = 3000.0;
+const float INTRO_BALL_SIZE = 40.0;
+
+
+int viewMode = 0;     // 0 - Начальная заставка
+                      // 1 - режим паузы
+                      // 2 - режим игры
+                      // 3 -
+                      // 4 -
+                      // 5 - режим ввода имени для сохранения рекорда
+                      // 6 - Проигрыш нажми кей
+                      // 7 - Победа нажми Key
+                      // 8 - Рейтинг
+                      // 9 - Титры
+
 
 // Инициализирует игрока
 void initPlayer(Player &player)
@@ -63,11 +77,30 @@ void pollEvents(sf::RenderWindow &window)
         case sf::Event::Closed:
             window.close();
             break;
-        case sf::Event::MouseButtonPressed:
-            onMouseClick(event);
-            break;
+//        case sf::Event::MouseButtonPressed:
+//            onMouseClick(event);
+//            break;
         default:
             break;
+        }
+    }
+}
+
+void pollEventsIntro(sf::RenderWindow &window)
+{
+    sf::Event event;
+    while (window.pollEvent(event))
+    {
+        switch (event.type)
+        {
+            case sf::Event::Closed:
+                window.close();
+                break;
+            case sf::Event::KeyPressed:
+                viewMode = 1;
+                break;
+            default:
+                break;
         }
     }
 }
@@ -90,10 +123,64 @@ void update(Player &player, float deltaTime)
     }
     player.position = newPosition;
 }
+
+void updateIntro(sf::CircleShape *introBall, float deltaTime, sf::Clock timer)
+{
+
+    const sf::Vector2f position = {-100, 0};
+    constexpr float speedX = 200.f;
+    constexpr float amplitudeY = 280.f;
+    constexpr float periodY = 2;
+
+    const float time = timer.getElapsedTime().asSeconds();
+    const float wavePhase = time * float(2 * M_PI);
+    const float x = speedX * time;
+    const float y = amplitudeY * -std::abs(std::sin(wavePhase / periodY)) + speedX * time / 3;
+    const sf::Vector2f offset = {x, y};
+    introBall->setPosition(position + offset);
+}
+
+// Рисует и выводит один кадр
+void redrawFrameIntro(sf::RenderWindow &window, sf::Clock timer, sf::CircleShape ball)
+{
+    std::vector<std::string> charArr = {"c", "r", "e", "a", "d", "o"};
+    sf::Font font;
+    font.loadFromFile("arial.ttf");
+    sf::Text text;
+    text.setFont(font);
+    text.setCharacterSize(90); // in pixels!
+    text.setFillColor(sf::Color(0xDF, 0xDF, 0xDF));
+    text.setStyle(sf::Text::Bold);
+    text.move({100.f, 120.f});
+
+    window.clear(sf::Color(0, 0, 0));
+    window.draw(ball);
+
+    for(int i = 0; i < charArr.size(); i++) {
+        text.setString(charArr[i]);
+        if(timer.getElapsedTime().asSeconds() >= i + 1)
+        {
+            window.draw(text);
+            text.move({200.f, 77.f});
+        }
+    }
+
+    if(timer.getElapsedTime().asSeconds() >= 10)
+    {
+        text.setString( "production");
+        text.setPosition({200.f, 620.f});
+        text.setCharacterSize(70); // in pixels!
+        text.setFillColor(sf::Color(0x77, 0x77, 0x77));
+        window.draw(text);
+    }
+
+    window.display();
+}
+
 // Рисует и выводит один кадр
 void redrawFrame(sf::RenderWindow &window, Player &player)
 {
-    const float perspKoef = 1 + 0.5 * (player.position.y / WINDOW_HEIGHT);
+    const float perspKoef = 1 + 0.5 * (WINDOW_HEIGHT / player.position.y);
     player.sprite.setPosition({player.position.x * perspKoef, player.position.y});
     player.sprite.setScale({perspKoef - 0.5, perspKoef - 0.5});
     player.sprite.move({WINDOW_WIDTH / 2, 0});
@@ -105,12 +192,18 @@ void redrawFrame(sf::RenderWindow &window, Player &player)
 int main()
 {
     sf::Clock clock;
+    sf::Clock timer;
+
+    sf::CircleShape introBall(INTRO_BALL_SIZE);
+    introBall.setFillColor(sf::Color(0xBF, 0xBF, 0xBF));
+    introBall.setPosition(-100, 0);
+
     std::srand(std::time(nullptr));
     sf::ContextSettings settings;
     settings.antialiasingLevel = 8;
     sf::RenderWindow window(
         sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}),
-        "Arrow follows mouse", sf::Style::Default, settings);
+        "Olimpic slalom", sf::Style::Default, settings);
 
     Player player;
 
@@ -119,9 +212,23 @@ int main()
     while (window.isOpen())
     {
         float deltaTime = getDeltaTime(clock);
+        switch (viewMode)
+        {
+            case 0:
+                pollEventsIntro(window);
+                updateIntro(&introBall, deltaTime, timer);
+                redrawFrameIntro(window, timer, introBall);
+                break;
+//            case 1:
+//
+//                break;
+            default:
 
-        pollEvents(window);
-        update(player, deltaTime);
-        redrawFrame(window, player);
+
+                pollEvents(window);
+                update(player, deltaTime);
+                redrawFrame(window, player);
+                break;
+        }
     }
 }
