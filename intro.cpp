@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include "vectors/main.h"
 
-void updateIntro(int* viewMode, sf::CircleShape *introBall, float deltaTime, sf::Clock timer, sf::Music *introMusic)
+void updateIntro(int* viewMode, sf::CircleShape *introBall, float deltaTime, sf::Clock timer, Game *game)
 {
     const sf::Vector2f position = {-100, 0};
     constexpr float speedX = 200.f;
@@ -24,7 +24,8 @@ void updateIntro(int* viewMode, sf::CircleShape *introBall, float deltaTime, sf:
     if (timer.getElapsedTime().asSeconds() > 15)
     {
         *viewMode = 1;
-        introMusic->stop();
+        game->sounds.introSound.stop();
+        game->sounds.gameSound.play();
     }
 }
 
@@ -61,13 +62,9 @@ void redrawFrameIntro(sf::RenderWindow &window, sf::Clock timer, sf::CircleShape
         text.setFillColor(sf::Color(0x77, 0x77, 0x77));
         window.draw(text);
     }
-
-    window.display();
 }
 
-
-
-void pollEventsIntro(int* viewMode, sf::RenderWindow &window, sf::Music *intro_sound)
+void pollEventsIntro(int* viewMode, sf::RenderWindow &window, Game *game)
 {
     sf::Event event;
     while (window.pollEvent(event))
@@ -79,7 +76,8 @@ void pollEventsIntro(int* viewMode, sf::RenderWindow &window, sf::Music *intro_s
                 break;
             case sf::Event::KeyPressed:
                 *viewMode = 1;
-                intro_sound->stop();
+                game->sounds.introSound.stop();
+                game->sounds.gameSound.play();
                 break;
             default:
                 break;

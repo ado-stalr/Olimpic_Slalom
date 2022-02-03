@@ -1,14 +1,12 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
 #include <SFML/Window.hpp>
-#include <SFML/Audio.hpp>
 #include <iostream>
 #include "vectors/main.h"
 
-std::vector<std::string> strArr = {"THE END", "", "Idea by creado", "Main dev group: creado", "Production: creado", "Animation: creado", "Music cast", "Created by creado", "IPS, 2022"};
+std::vector<std::string> strArr = {"THE END", "", "Idea by creado", "Main dev group: creado", "Production: creado", "Animation: creado", "Music cast: creado", "Created by creado", "IPS, 2022"};
 
-// Рисует и выводит один кадр
-void redrawFrameOutro(sf::RenderWindow &window, sf::Clock timer, sf::Music *outroMusic)
+void redrawFrameOutro(sf::RenderWindow &window, sf::Clock timer)
 {
     float duration = 30.f;
     sf::Font font;
@@ -32,12 +30,6 @@ void redrawFrameOutro(sf::RenderWindow &window, sf::Clock timer, sf::Music *outr
             text.move({0, 200.f});
         }
     }
-    else
-    {
-        outroMusic->stop();
-    }
-
-    window.display();
 }
 
 void pollEventsOutro(int* viewMode, sf::RenderWindow &window)
@@ -50,6 +42,14 @@ void pollEventsOutro(int* viewMode, sf::RenderWindow &window)
             case sf::Event::Closed:
                 window.close();
                 break;
+            case sf::Event::KeyPressed:
+                switch (event.key.code)
+                {
+                    case sf::Keyboard::Escape:
+                        window.close();
+                        break;
+                }
+               break;
             default:
                 break;
         }
